@@ -1,0 +1,145 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "authorship_tag": "ABX9TyMUKSnK6K7b17wO5DpIAYWQ",
+      "include_colab_link": true
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "view-in-github",
+        "colab_type": "text"
+      },
+      "source": [
+        "<a href=\"https://colab.research.google.com/github/poudel200/AI-lab/blob/main/question%207\" target=\"_parent\"><img src=\"https://colab.research.google.com/assets/colab-badge.svg\" alt=\"Open In Colab\"/></a>"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "id": "USvZtlFnLp3a",
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "outputId": "22aa0b9d-edb5-44fd-8c70-3c24ae35c724"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Initial State:\n",
+            "[1, 2, 3]\n",
+            "[0, 4, 6]\n",
+            "[7, 5, 8]\n",
+            "\n",
+            "Solution steps: ['Right', 'Down', 'Right']\n"
+          ]
+        }
+      ],
+      "source": [
+        "import heapq\n",
+        "\n",
+        "class PuzzleState:\n",
+        "    def __init__(self, board, parent=None, move=\"\", g=0, h=0):\n",
+        "        self.board = board\n",
+        "        self.parent = parent\n",
+        "        self.move = move\n",
+        "        self.g = g\n",
+        "        self.h = h\n",
+        "        self.f = g + h\n",
+        "\n",
+        "    def __lt__(self, other):\n",
+        "        return self.f < other.f\n",
+        "\n",
+        "def find_blank(board):\n",
+        "    for i in range(3):\n",
+        "        for j in range(3):\n",
+        "            if board[i][j] == 0:\n",
+        "                return i, j\n",
+        "\n",
+        "def get_neighbors(state):\n",
+        "    x, y = find_blank(state.board)\n",
+        "    directions = {\"Up\": (x - 1, y), \"Down\": (x + 1, y), \"Left\": (x, y - 1), \"Right\": (x, y + 1)}\n",
+        "    neighbors = []\n",
+        "    for move, (new_x, new_y) in directions.items():\n",
+        "        if 0 <= new_x < 3 and 0 <= new_y < 3:\n",
+        "            new_board = [row[:] for row in state.board]\n",
+        "            new_board[x][y], new_board[new_x][new_y] = new_board[new_x][new_y], new_board[x][y]\n",
+        "            neighbors.append(PuzzleState(new_board, state, move, state.g + 1, 0))\n",
+        "    return neighbors\n",
+        "\n",
+        "def heuristic(board, goal):\n",
+        "    distance = 0\n",
+        "    for i in range(3):\n",
+        "        for j in range(3):\n",
+        "            if board[i][j] != 0:\n",
+        "                x, y = divmod(goal.index(board[i][j]), 3)\n",
+        "                distance += abs(x - i) + abs(y - j)\n",
+        "    return distance\n",
+        "\n",
+        "def a_star(start, goal):\n",
+        "    start_state = PuzzleState(start, None, \"\", 0, heuristic(start, sum(goal, [])))\n",
+        "    open_list = []\n",
+        "    closed_set = set()\n",
+        "    heapq.heappush(open_list, start_state)\n",
+        "\n",
+        "    while open_list:\n",
+        "        current_state = heapq.heappop(open_list)\n",
+        "        if current_state.board == goal:\n",
+        "            path = []\n",
+        "            while current_state.parent:\n",
+        "                path.append(current_state.move)\n",
+        "                current_state = current_state.parent\n",
+        "            return path[::-1]\n",
+        "        closed_set.add(tuple(map(tuple, current_state.board)))\n",
+        "        for neighbor in get_neighbors(current_state):\n",
+        "            if tuple(map(tuple, neighbor.board)) in closed_set:\n",
+        "                continue\n",
+        "            neighbor.h = heuristic(neighbor.board, sum(goal, []))\n",
+        "            neighbor.f = neighbor.g + neighbor.h\n",
+        "            heapq.heappush(open_list, neighbor)\n",
+        "    return None\n",
+        "\n",
+        "def print_board(board):\n",
+        "    for row in board:\n",
+        "        print(row)\n",
+        "    print()\n",
+        "\n",
+        "start_state = [\n",
+        "    [1, 2, 3],\n",
+        "    [0, 4, 6],\n",
+        "    [7, 5, 8]\n",
+        "]\n",
+        "\n",
+        "goal_state = [\n",
+        "    [1, 2, 3],\n",
+        "    [4, 5, 6],\n",
+        "    [7, 8, 0]\n",
+        "]\n",
+        "\n",
+        "print(\"Initial State:\")\n",
+        "print_board(start_state)\n",
+        "solution = a_star(start_state, goal_state)\n",
+        "\n",
+        "if solution:\n",
+        "    print(\"Solution steps:\", solution)\n",
+        "else:\n",
+        "    print(\"No solution found.\")\n"
+      ]
+    }
+  ]
+}
